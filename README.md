@@ -176,7 +176,7 @@ curl -sS -X POST "$ORIGIN/api/bot/week" \
 ## What the board holds
 
 - **Urgent** sits at the top.
-- **This week** is Monday through Sunday in `DASHBOARD_TIMEZONE`. Checking a task sets `done`. The flag is stored in Redis (or the dev file) and is still set after a reload.
+- **This week** is Monday through Sunday in `DASHBOARD_TIMEZONE`. On the board the week card stays a fixed height and scrolls inside itself, with the day names stuck to the top of that card. **View full week** opens `/week`, a wider day-by-day page for a long list. Checking a task sets `done` in either place. The flag is stored in Redis (or the dev file) and is still set after a reload.
 - **Stalled** items record who or what they are blocked on.
 - **Channels** start as WhatsApp, Email, and School LMS. Each has a short status. Checking one marks it caught up.
 - **Deadlines** are sorted soonest first.

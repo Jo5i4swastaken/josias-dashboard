@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Channel, DashboardView, Deadline, StalledItem, UrgentItem, WeekDayView, WeekTask } from "@/lib/types";
 
 type Item = UrgentItem | WeekTask | StalledItem | Channel | Deadline;
@@ -59,7 +60,15 @@ function sortDeadlines(items: Deadline[]): Deadline[] {
   });
 }
 
-export function Dashboard({ username, initial }: { username: string; initial: DashboardView }) {
+export function Dashboard({
+  username,
+  initial,
+  layout = "board",
+}: {
+  username: string;
+  initial: DashboardView;
+  layout?: "board" | "week";
+}) {
   const [view, setView] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -120,25 +129,32 @@ export function Dashboard({ username, initial }: { username: string; initial: Da
   }
 
   return (
-    <main className="app">
+    <main className={layout === "week" ? "app app-week" : "app"}>
       <header className="top">
         <div>
           <p className="eyebrow">Week of {range}</p>
           <h1>Josias</h1>
           <p className="who">Signed in as {username}</p>
         </div>
-        <button
-          className="btn btn-ghost"
-          type="button"
-          onClick={() => {
-            void run("logout", async () => {
-              await send("/api/auth/logout", "POST");
-              window.location.assign("/login");
-            });
-          }}
-        >
-          Sign out
-        </button>
+        <div className="top-actions">
+          {layout === "week" ? (
+            <Link className="btn btn-ghost" href="/">
+              Board
+            </Link>
+          ) : null}
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => {
+              void run("logout", async () => {
+                await send("/api/auth/logout", "POST");
+                window.location.assign("/login");
+              });
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       {error ? (
@@ -148,6 +164,7 @@ export function Dashboard({ username, initial }: { username: string; initial: Da
       ) : null}
 
       <div className="stack">
+        {layout === "board" ? (
         <UrgentPanel
           items={view.urgent}
           pending={pending}
@@ -166,38 +183,31 @@ export function Dashboard({ username, initial }: { username: string; initial: Da
             })
           }
         />
+        ) : null}
 
-        <section className="panel" aria-labelledby="week-heading">
-          <div className="section-head">
-            <h2 id="week-heading">This week</h2>
-            <p>Check a task off. It stays done after you reload.</p>
-          </div>
-          <div className="week-grid">
-            {view.weekDays.map((day) => (
-              <DayColumn
-                key={day.id}
-                day={day}
-                tasks={view.week.filter((task) => task.day === day.id)}
-                pending={pending}
-                onToggle={(item) => toggle("week", item)}
-                onDelete={(id) => destroy("week", id)}
-                onSave={async (id, body) => {
-                  await run(id, async () => {
-                    const data = await send(`/api/dashboard/week/${id}`, "PATCH", body);
-                    if (data.item) put("week", data.item);
-                  });
-                }}
-                onAdd={(title) =>
-                  run(`add-${day.id}`, async () => {
-                    const data = await send("/api/dashboard/week", "POST", { title, day: day.id });
-                    if (data.item) put("week", data.item);
-                  })
-                }
-              />
-            ))}
-          </div>
-        </section>
+        <WeekBoard
+          variant={layout === "week" ? "full" : "compact"}
+          weekDays={view.weekDays}
+          tasks={view.week}
+          pending={pending}
+          onToggle={(item) => toggle("week", item)}
+          onDelete={(id) => destroy("week", id)}
+          onSave={async (id, body) => {
+            await run(id, async () => {
+              const data = await send(`/api/dashboard/week/${id}`, "PATCH", body);
+              if (data.item) put("week", data.item);
+            });
+          }}
+          onAdd={(dayId, title) =>
+            run(`add-${dayId}`, async () => {
+              const data = await send("/api/dashboard/week", "POST", { title, day: dayId });
+              if (data.item) put("week", data.item);
+            })
+          }
+        />
 
+        {layout === "board" ? (
+        <>
         <div className="split">
           <StalledPanel
             items={view.stalled}
@@ -256,6 +266,8 @@ export function Dashboard({ username, initial }: { username: string; initial: Da
             })
           }
         />
+        </>
+        ) : null}
       </div>
     </main>
   );
@@ -324,6 +336,110 @@ function UrgentPanel({
         </button>
       </form>
     </section>
+  );
+}
+
+function itemCountLabel(count: number): string {
+  return count === 1 ? "1 item" : `${count} items`;
+}
+
+function WeekBoard({
+  variant,
+  weekDays,
+  tasks,
+  pending,
+  onAdd,
+  onToggle,
+  onDelete,
+  onSave,
+}: {
+  variant: "compact" | "full";
+  weekDays: WeekDayView[];
+  tasks: WeekTask[];
+  pending: string | null;
+  onAdd: (dayId: WeekDayView["id"], title: string) => Promise<boolean>;
+  onToggle: (item: WeekTask) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onSave: (id: string, body: { title: string; notes: string }) => Promise<void>;
+}) {
+  const columns = weekDays.map((day) => (
+    <DayColumn
+      key={day.id}
+      day={day}
+      tasks={tasks.filter((task) => task.day === day.id)}
+      pending={pending}
+      onToggle={onToggle}
+      onDelete={onDelete}
+      onSave={onSave}
+      onAdd={(title) => onAdd(day.id, title)}
+    />
+  ));
+
+  return (
+    <section className={variant === "full" ? "panel week-full" : "panel"} aria-labelledby="week-heading">
+      <div className="section-head">
+        <h2 id="week-heading">This week</h2>
+        {variant === "compact" ? (
+          <Link className="week-open" href="/week">
+            View full week ({itemCountLabel(tasks.length)})
+          </Link>
+        ) : (
+          <p>Check a task off. It stays done after you reload.</p>
+        )}
+      </div>
+      {variant === "compact" ? <p className="week-note">Check a task off. It stays done after you reload.</p> : null}
+      {variant === "compact" ? (
+        <WeekScroll count={tasks.length}>
+          <div className="week-grid">{columns}</div>
+        </WeekScroll>
+      ) : (
+        <div className="week-days">{columns}</div>
+      )}
+    </section>
+  );
+}
+
+function WeekScroll({ count, children }: { count: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) {
+      return;
+    }
+    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const el = ref.current;
+    if (!el) {
+      return;
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    if (el.firstElementChild) {
+      observer.observe(el.firstElementChild);
+    }
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [measure, count]);
+
+  return (
+    <div className="week-scroll-wrap">
+      <div className="week-scroll" ref={ref} tabIndex={0} aria-label="Week tasks">
+        {children}
+      </div>
+      {moreBelow ? (
+        <div className="week-fade" aria-hidden="true">
+          More below
+        </div>
+      ) : null}
+    </div>
   );
 }
 
