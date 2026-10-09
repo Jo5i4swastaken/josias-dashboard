@@ -319,6 +319,13 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--green);
@@ -362,6 +369,7 @@ button:disabled {
   justify-content: space-between;
   gap: 12px;
   align-items: baseline;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
@@ -465,10 +473,134 @@ button:disabled {
   color: var(--sienna);
 }
 
+.week-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--green-deep);
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+.week-open:hover {
+  border-color: #9dcebc;
+  background: var(--green-soft);
+}
+
+.week-note {
+  margin: -2px 0 10px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.week-scroll-wrap {
+  position: relative;
+}
+
+.week-scroll {
+  max-height: min(340px, 46vh);
+  overflow: auto;
+  border-radius: 14px;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
+.week-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 252, 247, 0), rgba(255, 252, 247, 0.94) 68%, var(--card));
+  border-radius: 0 0 14px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green-deep);
+}
+
 .week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
+}
+
+.week-scroll .day {
+  padding: 0 10px 10px;
+}
+
+.week-scroll .day-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  margin: 0 -10px 8px;
+  padding: 10px 10px 8px;
+  border-radius: 13px 13px 0 0;
+  box-shadow: 0 8px 8px -8px rgba(28, 25, 21, 0.22);
+}
+
+.week-scroll .day.is-today .day-head {
+  background: var(--green-soft);
+}
+
+.app-week {
+  width: min(1280px, calc(100% - 28px));
+}
+
+.week-days {
+  display: grid;
+  gap: 12px;
+}
+
+.week-full .day {
+  padding: 0 16px 16px;
+}
+
+.week-full .day-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  margin: 0 -16px 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.week-full .day.is-today .day-head {
+  background: var(--green-soft);
+}
+
+.week-full .day-list {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.week-full .day-list .item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.week-full .add-row {
+  grid-template-columns: minmax(0, 420px) auto;
+  justify-content: start;
+}
+
+.week-full .day .add-row .btn {
+  width: auto;
 }
 
 .day {
@@ -570,8 +702,22 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .app {
+  .app,
+  .app-week {
     width: min(1120px, calc(100% - 20px));
+  }
+
+  .week-open {
+    width: 100%;
+  }
+
+  .week-full .add-row,
+  .week-full .day .add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .week-full .day .add-row .btn {
+    width: 100%;
   }
 }
 
