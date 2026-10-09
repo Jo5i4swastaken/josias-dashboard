@@ -1,0 +1,14 @@
+process.env.DASHBOARD_ENC_KEY = Buffer.alloc(32, 7).toString("base64");
+process.env.DASHBOARD_SESSION_SECRET = "test-session-secret-at-least-32-chars";
+process.env.DASHBOARD_SETUP_TOKEN = "test-setup-token";
+process.env.DASHBOARD_API_TOKEN = "test-api-token";
+process.env.EMAIL_FROM = "Josias Dashboard <dash@example.com>";
+process.env.DASHBOARD_TIMEZONE = "UTC";
+delete process.env.KV_REST_API_URL;
+delete process.env.KV_REST_API_TOKEN;
+delete process.env.RESEND_API_KEY;
+delete process.env.SMTP_HOST;
+delete process.env.SMTP_PORT;
+delete process.env.SMTP_USER;
+delete process.env.SMTP_PASS;
+delete process.env.DASHBOARD_2FA_EMAIL;
